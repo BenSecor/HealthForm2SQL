@@ -1,0 +1,116 @@
+/* App.css */
+
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f8fb; /* Light blue background */
+  color: #2c3e50; /* Darker text for contrast */
+}
+
+.App {
+  text-align: center;
+}
+
+h1 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  margin: 20px 0;
+  text-shadow: 1px 1px 2px #dfe6e9;
+}
+
+button {
+  margin-top: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #3498db; /* Primary blue */
+  color: white; /* White text for contrast */
+  border: none;
+  border-radius: 25px; /* Rounded corners for a modern look */
+  cursor: pointer;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #2980b9; /* Slightly darker blue for hover effect */
+  transform: scale(1.05); /* Slight scaling for interaction */
+}
+
+button:active {
+  transform: scale(1); /* Reset scaling on click */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+p {
+  color: #34495e;
+  font-size: 1.2rem;
+  margin: 15px 0;
+}
+
+img {
+  max-width: 90%;
+  height: auto;
+  border: 2px solid #3498db; /* Blue border to match theme */
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+div {
+  margin: 20px;
+  padding: 10px;
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 10px 15px;
+  }
+}
+
+.file-input-container {
+  display: inline-block;
+  position: relative;
+  font-family: Arial, sans-serif;
+}
+
+.file-input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0; /* Hide the default input */
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.file-input-label {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background-color: #3498db; /* Primary blue color */
+  border: none;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.file-input-label:hover {
+  background-color: #2980b9; /* Darker blue on hover */
+}
+
+.file-input-label:active {
+  transform: scale(0.95); /* Slight "press" effect */
+}
+
+.file-input-label:focus {
+  outline: 2px solid #2980b9; /* Accessible focus outline */
+}
