@@ -12,7 +12,7 @@ import csv
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///form_data.db'
-app.config['UPLOAD_FOLDER'] = '/Users/bensecor/Desktop/Form2Sql/health-form-app/static/uploads'
+app.config['UPLOAD_FOLDER'] = '/Users/bensecor/Desktop/DeepLearning/HealthForm2SQL/health-form-app/static/uploads'
 
 
 
@@ -176,6 +176,84 @@ def extract_fields_with_boxes(file_path):
         })
         used_boxes.add(i)
 
+    # Extend bounding boxes to cover the entire field
+    height, width, _ = image.shape
+    new_field_boxes = extend_bboxes(field_boxes, width, height)
+
+    return new_field_boxes
+
+
+def extend_bboxes(field_boxes, width, height, max_iterations=100):
+    """
+    Gradually extends bounding boxes in both directions over multiple iterations.
+
+    Args:
+        field_boxes (list): List of field metadata with bounding boxes.
+        width (int): Width of the image.
+        height (int): Height of the image.
+        max_iterations (int): Maximum number of iterations for extending boxes.
+
+    Returns:
+        list: List of updated field boxes with extended dimensions.
+    """
+    def intersects(box1, box2):
+        """Checks if two bounding boxes intersect."""
+        x1, y1, w1, h1 = box1
+        x2, y2, w2, h2 = box2
+        return not (x1 + w1 <= x2 or x2 + w2 <= x1 or y1 + h1 <= y2 or y2 + h2 <= y1)
+
+    for _ in range(max_iterations):
+        # Create a copy of field_boxes to process extensions iteratively
+        new_field_boxes = []
+        extended = False
+        # Extend each bounding box to the right and downwards incrementally
+        for box in field_boxes:
+            x, y, w, h = box['bbox']
+
+            # Try to extend to the right
+            if (x + w+ 10) < width:
+                extended_box = (x, y, w + 10, h)
+                if not any(
+                    intersects(extended_box, other_box['bbox'])
+                    for other_box in field_boxes
+                    if other_box['bbox'] != box['bbox']
+                ):
+                    w += 10
+                    extended = True
+
+            # Try to extend downwards
+            if (y + h+2) < height:
+                extended_box = (x, y, w, h + 1)
+                if not any(
+                    intersects(extended_box, other_box['bbox'])
+                    for other_box in field_boxes
+                    if other_box['bbox'] != box['bbox']
+                ):
+                    h += 1
+                    extended = True
+            
+             # Try to extend upwards
+            if (y + h+1) < height and y > 0:
+                extended_box = (x, y-1, w, h + 2)
+                if not any(
+                    intersects(extended_box, other_box['bbox'])
+                    for other_box in field_boxes
+                    if other_box['bbox'] != box['bbox']
+                ):
+                    y -= 1
+                    h += 1
+                    extended = True
+
+            # Update the box dimensions
+            box['bbox'] = (x, y, w, h)
+            new_field_boxes.append(box)
+        
+        # Update field_boxes for the next iteration
+        field_boxes = new_field_boxes
+        # If no extensions were made in this iteration, stop
+        if not extended:
+            break
+
     return field_boxes
 
 
@@ -193,6 +271,24 @@ def extract_data_with_boxes(file_path, fields_with_boxes):
     # Load the filled form image
     image = cv2.imread(file_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Save the uploaded file
+    def resize_image_to_match(image_to_resize, reference_image):
+        """
+        Resizes an image to match the dimensions of a reference image.
+
+        Args:
+            image_to_resize (ndarray): Image to be resized.
+            reference_image (ndarray): Reference image with desired dimensions.
+
+        Returns:
+            ndarray: Resized image.
+        """
+        ref_height, ref_width = reference_image.shape[:2]
+        resized_image = cv2.resize(image_to_resize, (ref_width, ref_height))
+        return resized_image
+
+    gray = resize_image_to_match(gray, cv2.imread(os.path.join(app.config['UPLOAD_FOLDER'], 'blank_form.png')))
+
 
     # Apply binarization for better OCR accuracy
     _, binarized = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -211,7 +307,7 @@ def extract_data_with_boxes(file_path, fields_with_boxes):
         cv2.imwrite(debug_path, cropped_region)
 
         # Extract text from the cropped region using Tesseract OCR
-        extracted_text = pytesseract.image_to_string(cropped_region, config="--psm 6").strip()
+        extracted_text = pytesseract.image_to_string(cropped_region, config="--psm 11").strip()
 
         # Store the extracted text in the result dictionary
         extracted_data[field_name] = extracted_text
