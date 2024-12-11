@@ -1,11 +1,17 @@
 import React from "react";
-import '../App.css'; 
+import '../App.css';
 
 function DataDisplay({ data }) {
   return (
-    <div>
+    <div className="container">
       <h2>Extracted Data</h2>
-      <table border="1">
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Value</th>
+          </tr>
+        </thead>
         <tbody>
           {Object.keys(data).map((key) => (
             <tr key={key}>

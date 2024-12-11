@@ -1,13 +1,15 @@
 from flask import Flask, request, redirect, send_from_directory, url_for, render_template, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-import PyPDF2
-from PIL import Image
 import os
 from flask_cors import CORS
-import re
 import pytesseract
 import cv2
-import csv
+from googleapiclient.discovery import build
+import base64
+import numpy as np
+
+# Your API key
+api_key = "SEE TEXTS ANDREW"
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -15,9 +17,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///form_data.db'
 app.config['UPLOAD_FOLDER'] = '/Users/bensecor/Desktop/DeepLearning/HealthForm2SQL/health-form-app/static/uploads'
 
 
-
 # Enable CORS with specific origin and credentials support
-CORS(app, resources={r"/visualize_boxes": {"origins": "http://localhost:3000"},r"/upload_filled": {"origins": "http://localhost:3000"}, r"/upload_blank": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+CORS(app, resources={r"/submit_fields": {"origins": "http://localhost:3000"},r"/visualize_boxes": {"origins": "http://localhost:3000"},r"/upload_filled": {"origins": "http://localhost:3000"}, r"/upload_blank": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 #CORS(app)
 db = SQLAlchemy(app)
 
@@ -64,16 +65,26 @@ def upload_blank():
     # Extract field names
     fields = [field['name'] for field in fields_with_boxes]
 
-    # Reset database schema with new fields
-    try:
-        db.drop_all()
-        global FormData
-        FormData = create_dynamic_table_with_boxes(fields)
-        db.create_all()
-    except Exception as e:
-        return jsonify({"error": f"Failed to reset database: {e}"}), 500
+    # # Reset database schema with new fields
+    # try:
+    #     db.drop_all()
+    #     global FormData
+    #     FormData = create_dynamic_table_with_boxes(fields)
+    #     db.create_all()
+    # except Exception as e:
+    #     return jsonify({"error": f"Failed to reset database: {e}"}), 500
 
     return jsonify({"message": "Blank form processed and schema created.", "fields": fields})
+
+@app.route('/submit_fields', methods=['POST'])
+def submit_fields():
+    data = request.get_json()
+    selected_fields = data.get('fields', [])
+    db.drop_all()
+    global FormData
+    FormData = create_dynamic_table_with_boxes(selected_fields)
+    db.create_all()
+    return jsonify({"success": True, "message": "Fields submitted successfully."}), 200
 
 
 @app.route('/upload_filled', methods=['POST'])
@@ -171,7 +182,7 @@ def extract_fields_with_boxes(file_path):
 
         # Save the final field as a single bounding box with combined text
         field_boxes.append({
-            'name': ' '.join(field_text).strip(),
+            'name': '_'.join(field_text).strip(),
             'bbox': (x1, y1, x2 - x1, y2 - y1)  # (x, y, width, height)
         })
         used_boxes.add(i)
@@ -272,28 +283,41 @@ def extract_data_with_boxes(file_path, fields_with_boxes):
     image = cv2.imread(file_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Save the uploaded file
-    def resize_image_to_match(image_to_resize, reference_image):
+    def subtract_blank_form(filled_form, blank_form):
         """
-        Resizes an image to match the dimensions of a reference image.
+        Subtracts the blank form from the filled form to isolate input text.
 
         Args:
-            image_to_resize (ndarray): Image to be resized.
-            reference_image (ndarray): Reference image with desired dimensions.
+            filled_form (ndarray): Image of the filled form.
+            blank_form (ndarray): Image of the blank form.
 
         Returns:
-            ndarray: Resized image.
+            ndarray: Image containing only the input text and differences.
         """
-        ref_height, ref_width = reference_image.shape[:2]
-        resized_image = cv2.resize(image_to_resize, (ref_width, ref_height))
-        return resized_image
+        # Ensure both images are grayscale
+        filled_gray = cv2.cvtColor(filled_form, cv2.COLOR_BGR2GRAY) if len(filled_form.shape) == 3 else filled_form
+        blank_gray = cv2.cvtColor(blank_form, cv2.COLOR_BGR2GRAY) if len(blank_form.shape) == 3 else blank_form
 
-    gray = resize_image_to_match(gray, cv2.imread(os.path.join(app.config['UPLOAD_FOLDER'], 'blank_form.png')))
+        # Resize the blank form to match the filled form (if necessary)
+        filled_gray = cv2.resize(filled_gray, (blank_gray.shape[1], blank_gray.shape[0]))
 
+        # Subtract the blank form from the filled form
+        difference = cv2.absdiff(filled_gray, blank_gray)
 
-    # Apply binarization for better OCR accuracy
-    _, binarized = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # Apply a binary threshold to isolate the differences
+        _, thresholded = cv2.threshold(difference, 50, 255, cv2.THRESH_BINARY)
 
+        return thresholded
+
+    binarized = subtract_blank_form(gray, cv2.imread(os.path.join(app.config['UPLOAD_FOLDER'], 'blank_form.png')))
+
+    #Save Binarized Image
+    cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'], 'binarized.png'), binarized)
+    # # Apply binarization for better OCR accuracy
+    # _, binarized = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     extracted_data = {}
+
+    service = build("vision", "v1", developerKey=api_key)
 
     for field in fields_with_boxes:
         field_name = field['name']
@@ -302,16 +326,24 @@ def extract_data_with_boxes(file_path, fields_with_boxes):
         # Crop the region defined by the bounding box
         cropped_region = binarized[y:y + h, x:x + w]
 
-        # Debugging: Save the cropped region as an image (optional)
-        debug_path = f"static/cropped_{field_name}.png"
-        cv2.imwrite(debug_path, cropped_region)
-
-        # Extract text from the cropped region using Tesseract OCR
-        extracted_text = pytesseract.image_to_string(cropped_region, config="--psm 11").strip()
-
-        # Store the extracted text in the result dictionary
-        extracted_data[field_name] = extracted_text
-
+        extracted_data[field_name] = ""
+        # Encode the cropped region in memory
+        _, buffer = cv2.imencode(".png", cropped_region)
+        content = base64.b64encode(buffer).decode("utf-8")
+        # Prepare the request
+        request = {
+            "requests": [
+                {
+                    "image": {"content": content},
+                    "features": [{"type": "TEXT_DETECTION"}],
+                }
+            ]
+        }
+        # Make the API call
+        response = service.images().annotate(body=request).execute()
+        if "textAnnotations" in response["responses"][0]:
+            text = response["responses"][0]["textAnnotations"][0]['description']
+            extracted_data[field_name] += text
     return extracted_data
 
 

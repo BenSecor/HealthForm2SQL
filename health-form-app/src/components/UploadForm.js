@@ -52,7 +52,7 @@ function UploadForm({ setFormData, setFields }) {
   };
 
   return (
-    <div>
+    <div className="container">
       <form onSubmit={handleBlankUpload}>
         <label>Upload Blank Form:</label>
         <input type="file" classname='file-input' onChange={(e) => setBlankFile(e.target.files[0])} />

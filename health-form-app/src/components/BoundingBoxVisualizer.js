@@ -23,7 +23,7 @@ const BoundingBoxVisualizer = () => {
   };
 
   return (
-    <div style={{ textAlign: "center", margin: "20px" }}>
+    <div className="container">
       <h1>Bounding Box Visualization</h1>
       <button onClick={fetchAnnotatedImage} style={{ padding: "10px 20px", fontSize: "16px" }}>
         Visualize
