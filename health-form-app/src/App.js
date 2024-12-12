@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import UploadForm from "./components/UploadForm";
+import UploadBlankForm from "./components/UploadBlankForm";
+import UploadFilledForm from "./components/UploadFilledForm";
 import DataDisplay from "./components/DataDisplay";
 import BoundingBoxVisualizer from "./components/BoundingBoxVisualizer";
 import FieldsSelector from "./components/FieldsSelector";
@@ -34,9 +35,10 @@ function App() {
   return (
     <div className="App">
       <h1>Form Processor</h1>
-      <UploadForm setFormData={setFormData} setFields={setFields} />
+      <UploadBlankForm setFields={setFields} />
       <BoundingBoxVisualizer />
       {fields && fields.length >0 && <FieldsSelector availableFields={fields} onSubmit={handleFieldSubmission}/>}
+      <UploadFilledForm setFormData={setFormData}/>
       {formData && <DataDisplay data={formData} />}
     </div>
   );

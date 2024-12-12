@@ -22,12 +22,28 @@ const BoundingBoxVisualizer = () => {
     }
   };
 
+  const hideImage = () => {
+    setImageUrl(null);
+  };
+
   return (
     <div className="container">
-      <h1>Bounding Box Visualization</h1>
-      <button onClick={fetchAnnotatedImage} style={{ padding: "10px 20px", fontSize: "16px" }}>
-        Visualize
-      </button>
+      <label>Bounding Box Visualization</label>
+      {imageUrl ? (
+        <button 
+          onClick={hideImage} 
+          style={{ padding: "10px 20px", fontSize: "16px" }}
+        >
+          Hide
+        </button>
+      ) : (
+        <button 
+          onClick={fetchAnnotatedImage} 
+          style={{ padding: "10px 20px", fontSize: "16px" }}
+        >
+          Visualize
+        </button>
+      )}
       {error && <p style={{ color: "red" }}>{error}</p>}
       {imageUrl && (
         <div style={{ marginTop: "20px" }}>

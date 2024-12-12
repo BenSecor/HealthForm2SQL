@@ -7,8 +7,7 @@
   background-color: white; /* White background for better contrast */
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for modern look */
   border-radius: 10px; /* Rounded corners */
-}
-
+} 
 
 body {
   margin: 0;
@@ -82,48 +81,6 @@ div {
     font-size: 14px;
     padding: 10px 15px;
   }
-}
-
-.file-input-container {
-  display: inline-block;
-  position: relative;
-  font-family: Arial, sans-serif;
-}
-
-.file-input {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0; /* Hide the default input */
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-}
-
-.file-input-label {
-  display: inline-block;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  color: white;
-  background-color: #3498db; /* Primary blue color */
-  border: none;
-  border-radius: 5px;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.file-input-label:hover {
-  background-color: #2980b9; /* Darker blue on hover */
-}
-
-.file-input-label:active {
-  transform: scale(0.95); /* Slight "press" effect */
-}
-
-.file-input-label:focus {
-  outline: 2px solid #2980b9; /* Accessible focus outline */
 }
 
 /* Table Styles */

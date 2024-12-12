@@ -9,7 +9,7 @@ import base64
 import numpy as np
 
 # Your API key
-api_key = "SEE TEXTS ANDREW"
+api_key = "AIzaSyDzzPQFMV1agHwnABcSyaYJtqU4dvrMf0U"
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -31,17 +31,29 @@ if os.path.exists(app.config['UPLOAD_FOLDER']):
 
 import json
 
-# Modify database schema creation to store bounding boxes
+# Function to dynamically create a table with given columns
 def create_dynamic_table_with_boxes(columns):
-    class FormData(db.Model):
-        __tablename__ = 'form_data'
-        id = db.Column(db.Integer, primary_key=True)
-        for column in columns:
-            locals()[column] = db.Column(db.String(255))  # Data storage
-    db.create_all()
+    metadata = db.Model.metadata
+    table_name = 'form_data'
+
+    if table_name in metadata.tables:
+        # Remove existing table definition from metadata
+        metadata.remove(metadata.tables[table_name])
+
+    # Define dynamic table schema
+    fields = {
+        '__tablename__': table_name,
+        'id': db.Column(db.Integer, primary_key=True)
+    }
+
+    for column in columns:
+        fields[column] = db.Column(db.String(255))
+
+    # Create a new dynamic model
+    FormData = type('FormData', (db.Model,), fields)
+    db.create_all()  # Apply schema changes to the database
     return FormData
 
-# Store bounding boxes in JSON format
 @app.route('/upload_blank', methods=['POST'])
 def upload_blank():
     if 'file' not in request.files:
@@ -57,7 +69,7 @@ def upload_blank():
     # Use OCR to extract text and bounding boxes
     fields_with_boxes = extract_fields_with_boxes(file_path)
 
-    # Save bounding boxes to a file or database
+    # Save bounding boxes to a JSON file
     bounding_boxes_path = os.path.join(app.config['UPLOAD_FOLDER'], 'bounding_boxes.json')
     with open(bounding_boxes_path, 'w') as f:
         json.dump(fields_with_boxes, f)
@@ -65,14 +77,13 @@ def upload_blank():
     # Extract field names
     fields = [field['name'] for field in fields_with_boxes]
 
-    # # Reset database schema with new fields
-    # try:
-    #     db.drop_all()
-    #     global FormData
-    #     FormData = create_dynamic_table_with_boxes(fields)
-    #     db.create_all()
-    # except Exception as e:
-    #     return jsonify({"error": f"Failed to reset database: {e}"}), 500
+    # Reset database schema with new fields
+    try:
+        db.drop_all()
+        global FormData
+        FormData = create_dynamic_table_with_boxes(fields)
+    except Exception as e:
+        return jsonify({"error": f"Failed to reset database: {e}"}), 500
 
     return jsonify({"message": "Blank form processed and schema created.", "fields": fields})
 
@@ -80,44 +91,57 @@ def upload_blank():
 def submit_fields():
     data = request.get_json()
     selected_fields = data.get('fields', [])
-    db.drop_all()
-    global FormData
-    FormData = create_dynamic_table_with_boxes(selected_fields)
-    db.create_all()
-    return jsonify({"success": True, "message": "Fields submitted successfully."}), 200
 
+    try:
+        db.drop_all()
+        global FormData
+        FormData = create_dynamic_table_with_boxes(selected_fields)
+    except Exception as e:
+        return jsonify({"error": f"Failed to submit fields: {e}"}), 500
+
+    return jsonify({"success": True, "message": "Fields submitted successfully."}), 200
 
 @app.route('/upload_filled', methods=['POST'])
 def upload_filled():
-    if 'file' not in request.files:
+    if 'files' not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
 
-    uploaded_file = request.files['file']
-    if uploaded_file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    uploaded_files = request.files.getlist('files')
+    if not uploaded_files:
+        return jsonify({"error": "No selected files"}), 400
 
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'filled_form.png')
-    uploaded_file.save(file_path)
+    extracted_data_list = []
 
-    # Load bounding boxes
-    bounding_boxes_path = os.path.join(app.config['UPLOAD_FOLDER'], 'bounding_boxes.json')
-    with open(bounding_boxes_path, 'r') as f:
-        fields_with_boxes = json.load(f)
+    # Process each file
+    for uploaded_file in uploaded_files:
+        if uploaded_file.filename == '':
+            continue
 
-    # Extract data using bounding boxes
-    extracted_data = extract_data_with_boxes(file_path, fields_with_boxes)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+        uploaded_file.save(file_path)
 
-    # Save data to the database
-    valid_columns = {column.name for column in FormData.__table__.columns}
-    filtered_data = {key: value for key, value in extracted_data.items() if key in valid_columns}
-    try:
-        record = FormData(**filtered_data)
-        db.session.add(record)
-        db.session.commit()
-    except Exception as e:
-        return jsonify({"error": f"Failed to save data to database: {e}"}), 500
+        # Load bounding boxes
+        bounding_boxes_path = os.path.join(app.config['UPLOAD_FOLDER'], 'bounding_boxes.json')
+        with open(bounding_boxes_path, 'r') as f:
+            fields_with_boxes = json.load(f)
 
-    return jsonify({"message": "Filled form processed and data saved.", "data": filtered_data})
+        # Extract data using bounding boxes
+        extracted_data = extract_data_with_boxes(file_path, fields_with_boxes)
+
+        # Save data to the database
+        valid_columns = {column.name for column in FormData.__table__.columns}
+        filtered_data = {key: value for key, value in extracted_data.items() if key in valid_columns}
+
+        try:
+            record = FormData(**filtered_data)
+            db.session.add(record)
+            db.session.commit()
+            extracted_data_list.append(filtered_data)
+        except Exception as e:
+            return jsonify({"error": f"Failed to save data to database: {e}"}), 500
+
+    return jsonify({"message": "Filled forms processed and data saved.", "data": extracted_data_list})
+
 
 def extract_fields_with_boxes(file_path):
     # Load the image

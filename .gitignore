@@ -26,3 +26,4 @@ yarn-error.log*
 
 /health-form-app/static
 /health-form-app/instance/form_data.db
+/.venv/
