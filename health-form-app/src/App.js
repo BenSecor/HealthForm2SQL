@@ -45,57 +45,78 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>Form Processor</h1>
-      <UploadBlankForm
-        setFields={(fields) => {
-          setFields(fields);
-          openModal(); // Open modal after fetching fields
-        }}
-      />
+    
+    <div className="d-flex justify-content-center align-items-center">
+      <div className="container text-center">
+        <h1 className="mb-4 custom-font-merriweather">Form Processor</h1>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div
-          className={`modal fade ${isModalOpen ? "show d-block" : ""}`}
-          tabIndex="-1"
-          role="dialog"
-          style={{ background: "rgba(0, 0, 0, 0.5)" }}
-        >
-          <div className="modal-dialog modal-lg" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Select Fields</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  aria-label="Close"
-                  onClick={closeModal}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <BoundingBoxVisualizer fields={fields} />
-                <FieldsSelector
-                  availableFields={fields}
-                  onSubmit={handleFieldSubmission}
-                />
+        {/* Upload Blank Form */}
+        <div className="mb-3">
+          <UploadBlankForm
+            setFields={(fields) => {
+              setFields(fields);
+              openModal();
+            }}
+          />
+        </div>
+
+        {/* Upload Filled Form */}
+        <div className="mb-4">
+          <UploadFilledForm setFormData={setFormData} />
+        </div>
+
+        {/* Buttons Section */}
+        <div className="row justify-content-center g-2">
+          <div className="col-auto">
+            <DownloadCSVButton />
+          </div>
+          <div className="col-auto">
+            <ResetDatabaseButton />
+          </div>
+        </div>
+
+        {/* Data Display */}
+        {formData && (
+          <div className="mt-4">
+            <DataDisplay data={formData} />
+          </div>
+        )}
+
+        {/* Modal */}
+        {isModalOpen && (
+          <div
+            className={`modal fade ${isModalOpen ? "show d-block" : ""}`}
+            tabIndex="-1"
+            role="dialog"
+            style={{ background: "rgba(0, 0, 0, 0.5)" }}
+          >
+            <div className="modal-dialog modal-lg" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <div className="w-100 text-center">
+                    <h5 className="modal-title custom-font-merriweather mb-0">
+                      Select Fields
+                    </h5>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={closeModal}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <BoundingBoxVisualizer fields={fields} />
+                  <FieldsSelector
+                    availableFields={fields}
+                    onSubmit={handleFieldSubmission}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      <UploadFilledForm setFormData={setFormData}/>
-            <div className="container mt-4 p-2">
-              <div className="row g-2">
-                <div className="col text-center">
-                  <DownloadCSVButton />
-                </div>
-                <div className="col text-center">
-                  <ResetDatabaseButton />
-                </div>
-              </div>
-            </div>
-      {formData && <DataDisplay data={formData} />}
+        )}
+      </div>
     </div>
   );
 }

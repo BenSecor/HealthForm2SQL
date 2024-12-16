@@ -1,4 +1,5 @@
 /* App.css */
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Kode+Mono:wght@400..700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Protest+Revolution&display=swap");
 
 .container {
   max-width: 800px; /* Limit the width of the content */
@@ -133,4 +134,30 @@ strong {
     padding: 10px; /* Adjust padding for smaller screens */
     font-size: 14px; /* Smaller font size */
   }
+}
+
+.custom-btn {
+  background-color: #28a76e; /* Green */
+  border-color: #28a774; /* Green border */
+  color: white; /* White text */
+}
+
+.custom-btn:hover {
+  background-color: #218851; /* Darker green on hover */
+  border-color: #1e7e48;
+}
+
+.custom-font-dancing {
+  font-family: "Dancing Script", cursive;
+  font-weight: 700;
+}
+
+.custom-font-merriweather {
+  font-family: "Merriweather", serif;
+  font-weight: 400;
+}
+
+.custom-font-protest {
+  font-family: "Protest Revolution", sans-serif;
+  font-weight: 400;
 }

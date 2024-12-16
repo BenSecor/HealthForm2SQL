@@ -36,7 +36,7 @@ function UploadBlankForm({ setFields }) {
           className="file-input"
           onChange={(e) => setBlankFile(e.target.files[0])}
         />
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn custom-btn">
           Upload Blank Form
         </button>
       </form>

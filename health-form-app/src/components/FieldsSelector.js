@@ -18,7 +18,7 @@ function FieldsSelector({ availableFields, onSubmit }) {
 
   return (
     <div className="container">
-      <h2>Select Fields</h2>
+      {/* <h2>Select Fields</h2> */}
       <ul>
         {availableFields.map((field) => (
           <li key={field}>
