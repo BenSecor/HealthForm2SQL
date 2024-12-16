@@ -7,6 +7,11 @@ import cv2
 from googleapiclient.discovery import build
 import base64
 import numpy as np
+from pdf2image import convert_from_path
+
+import csv
+from io import StringIO
+from flask import Response
 
 # Your API key
 api_key = "AIzaSyDzzPQFMV1agHwnABcSyaYJtqU4dvrMf0U"
@@ -18,7 +23,7 @@ app.config['UPLOAD_FOLDER'] = '/Users/bensecor/Desktop/DeepLearning/HealthForm2S
 
 
 # Enable CORS with specific origin and credentials support
-CORS(app, resources={r"/submit_fields": {"origins": "http://localhost:3000"},r"/visualize_boxes": {"origins": "http://localhost:3000"},r"/upload_filled": {"origins": "http://localhost:3000"}, r"/upload_blank": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+CORS(app, resources={r"\download_csv":{"origins":"http://localhost:3000"},r"/submit_fields": {"origins": "http://localhost:3000"},r"/visualize_boxes": {"origins": "http://localhost:3000"},r"/upload_filled": {"origins": "http://localhost:3000"}, r"/upload_blank": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 #CORS(app)
 db = SQLAlchemy(app)
 
@@ -53,6 +58,52 @@ def create_dynamic_table_with_boxes(columns):
     FormData = type('FormData', (db.Model,), fields)
     db.create_all()  # Apply schema changes to the database
     return FormData
+
+@app.route('/reset_database', methods=['POST'])
+def reset_database():
+    try:
+        db.drop_all()  # Drops all database tables
+        db.create_all()  # Recreates the database schema
+        print("Database reset successfully.")  # Debug log
+        return jsonify({"message": "Database reset successfully."}), 200
+    except Exception as e:
+        print("Error resetting database:", str(e))  # Debug log
+        return jsonify({"error": "Failed to reset database.", "details": str(e)}), 500
+
+@app.route('/download_csv', methods=['GET'])
+def download_csv():
+    global FormData 
+    try:
+        # Step 1: Query the database
+        records = FormData.query.all()
+        print("Fetched records:", records)  # Log all records
+
+        # Step 2: Get column names
+        column_names = [column.name for column in FormData.__table__.columns]
+        print("Column names:", column_names)  # Log column names
+
+        # Step 3: Generate CSV content
+        csv_output = StringIO()
+        writer = csv.writer(csv_output)
+        writer.writerow(column_names)  # Write header
+        print("CSV Header written.")  # Log
+
+        # Step 4: Write each record to CSV
+        for record in records:
+            row = [getattr(record, column) for column in column_names]
+            print("Writing row to CSV:", row)  # Log row being written
+            writer.writerow(row)
+        
+        # Step 5: Generate and return response
+        csv_output.seek(0)
+        response = Response(csv_output, mimetype='text/csv')
+        response.headers['Content-Disposition'] = 'attachment; filename=form_data.csv'
+        print("CSV generated successfully.")  # Log success
+        return response
+    except Exception as e:
+        # Log detailed error information
+        print("Error generating CSV:", str(e))  # Log error message
+        return jsonify({"error": "Failed to generate CSV", "details": str(e)}), 500
 
 @app.route('/upload_blank', methods=['POST'])
 def upload_blank():
@@ -105,22 +156,40 @@ def submit_fields():
 def upload_filled():
     if 'files' not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
-
+    
     uploaded_files = request.files.getlist('files')
     if not uploaded_files:
         return jsonify({"error": "No selected files"}), 400
 
     extracted_data_list = []
+    new_files = []
+
+    #remove PDFS
+    for uploaded_file in uploaded_files:
+        if uploaded_file.filename.endswith('.pdf'):
+            uploaded_files.remove(uploaded_file)
+            #parse PDF into multiple images 
+            pages = convert_from_path(uploaded_file, 500)
+            for i, page in enumerate(pages):
+                page.save(os.path.join(app.config['UPLOAD_FOLDER'], f'{uploaded_file}page_{i}.png'),'PNG')
+                new_files.append(f'{uploaded_file}page_{i}.png')
+        elif uploaded_file.filename.endswith('.png') or uploaded_file.filename.endswith('.jpg'):
+            new_files.append(uploaded_file)
+        else:
+            return jsonify({"error": "Invalid file format. Please upload a PDF, PNG, or JPG files."}), 400
 
     # Process each file
     for uploaded_file in uploaded_files:
         if uploaded_file.filename == '':
             continue
-
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
-        uploaded_file.save(file_path)
-
+        if uploaded_file.filename.endswith('.png') or uploaded_file.filename.endswith('.jpg'):
+            uploaded_file.save(file_path)
+        else:
+            return jsonify({"error": "Invalid file format. Please upload a PDF, PNG, or JPG files."}), 400
+        
         # Load bounding boxes
+        
         bounding_boxes_path = os.path.join(app.config['UPLOAD_FOLDER'], 'bounding_boxes.json')
         with open(bounding_boxes_path, 'r') as f:
             fields_with_boxes = json.load(f)
@@ -139,9 +208,15 @@ def upload_filled():
             extracted_data_list.append(filtered_data)
         except Exception as e:
             return jsonify({"error": f"Failed to save data to database: {e}"}), 500
+    
+     # Retrieve all data from the database
+    all_data = []
+    records = FormData.query.all()
+    for record in records:
+        row = {column.name: getattr(record, column.name) for column in FormData.__table__.columns}
+        all_data.append(row)
 
-    return jsonify({"message": "Filled forms processed and data saved.", "data": extracted_data_list})
-
+    return jsonify({"message": "Filled forms processed and data saved.", "data": all_data,})
 
 def extract_fields_with_boxes(file_path):
     # Load the image

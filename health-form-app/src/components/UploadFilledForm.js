@@ -34,7 +34,7 @@ function UploadFilledForm({ setFormData, setFields }) {
       <form onSubmit={handleFilledUpload}>
         <label>Upload Filled Forms:</label>
         <input type="file" class="file-input" multiple onChange={(e) => setFilledFiles(Array.from(e.target.files))} />
-        <button type="submit">Upload Filled Forms</button>
+        <button type="submit" class="btn btn-primary">Upload Filled Forms</button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
