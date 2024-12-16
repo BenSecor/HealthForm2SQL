@@ -92,9 +92,9 @@ function App() {
           >
             <div className="modal-dialog modal-lg" role="document">
               <div className="modal-content">
-                <div className="modal-header">
+                <div className="modal-header py-0">
                   <div className="w-100 text-center">
-                    <h5 className="modal-title custom-font-merriweather mb-0">
+                    <h5 className="modal-title custom-font-merriweather mb-0 mt-0" style={{ fontSize: "2.5rem", margin: "0" }}>
                       Select Fields
                     </h5>
                   </div>
