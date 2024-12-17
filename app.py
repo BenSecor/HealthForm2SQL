@@ -14,7 +14,7 @@ from io import StringIO
 from flask import Response
 
 # Your API key
-api_key = "AIzaSyDzzPQFMV1agHwnABcSyaYJtqU4dvrMf0U"
+api_key = "GET YOUR OWN KEY PAL"
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -64,10 +64,9 @@ def reset_database():
     try:
         db.drop_all()  # Drops all database tables
         db.create_all()  # Recreates the database schema
-        print("Database reset successfully.")  # Debug log
         return jsonify({"message": "Database reset successfully."}), 200
     except Exception as e:
-        print("Error resetting database:", str(e))  # Debug log
+        # print("Error resetting database:", str(e))  # Debug log
         return jsonify({"error": "Failed to reset database.", "details": str(e)}), 500
 
 @app.route('/download_csv', methods=['GET'])
@@ -76,33 +75,33 @@ def download_csv():
     try:
         # Step 1: Query the database
         records = FormData.query.all()
-        print("Fetched records:", records)  # Log all records
+        # print("Fetched records:", records)  # Log all records
 
         # Step 2: Get column names
         column_names = [column.name for column in FormData.__table__.columns]
-        print("Column names:", column_names)  # Log column names
+        # print("Column names:", column_names)  # Log column names
 
         # Step 3: Generate CSV content
         csv_output = StringIO()
         writer = csv.writer(csv_output)
         writer.writerow(column_names)  # Write header
-        print("CSV Header written.")  # Log
+        # print("CSV Header written.")  # Log
 
         # Step 4: Write each record to CSV
         for record in records:
             row = [getattr(record, column) for column in column_names]
-            print("Writing row to CSV:", row)  # Log row being written
+            # print("Writing row to CSV:", row)  # Log row being written
             writer.writerow(row)
         
         # Step 5: Generate and return response
         csv_output.seek(0)
         response = Response(csv_output, mimetype='text/csv')
         response.headers['Content-Disposition'] = 'attachment; filename=form_data.csv'
-        print("CSV generated successfully.")  # Log success
+        # print("CSV generated successfully.")  # Log success
         return response
     except Exception as e:
         # Log detailed error information
-        print("Error generating CSV:", str(e))  # Log error message
+        # print("Error generating CSV:", str(e))  # Log error message
         return jsonify({"error": "Failed to generate CSV", "details": str(e)}), 500
 
 @app.route('/upload_blank', methods=['POST'])
@@ -114,8 +113,25 @@ def upload_blank():
     if uploaded_file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'blank_form.png')
-    uploaded_file.save(file_path)
+    if uploaded_file.filename.endswith(('.png', '.jpg')):
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+        uploaded_file.save(file_path)
+    elif uploaded_file.filename.endswith('.pdf'):
+        #convert to PNG and save 
+        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+        uploaded_file.save(pdf_path)
+        pdf_document = fitz.open(pdf_path)  # Open the PDF using PyMuPDF
+        if len(pdf_document) > 1:
+            return jsonify({"error": "Please upload a single-page PDF file."}), 400
+
+        page = pdf_document[0]  # Get first page 
+        pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))  # Convert page to an image with DPI=300
+        page_filename = f"{os.path.splitext(uploaded_file.filename)[0]}.png"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], page_filename)
+        pix.save(file_path)  # Save the image as PNG
+        pdf_document.close()
+    else:
+        return jsonify({"error": "Invalid file format. Please upload PNG, JPG, or PDF files only."}), 400
 
     # Use OCR to extract text and bounding boxes
     fields_with_boxes = extract_fields_with_boxes(file_path)
@@ -162,7 +178,7 @@ def upload_filled():
 
     new_files = []
 
-    print("Uploaded Files", uploaded_files)  # Log uploaded files
+    # print("Uploaded Files", uploaded_files)  # Log uploaded files
     # Process PDFs and convert them into images
     for uploaded_file in uploaded_files:
         if uploaded_file.filename.endswith('.pdf'):
@@ -181,7 +197,7 @@ def upload_filled():
                     new_files.append(page_path)  # Append file path to list
                 
                 pdf_document.close()
-                print("PDF processed successfully.")  # Log success
+                # print("PDF processed successfully.")  # Log success
             except Exception as e:
                 raise RuntimeError(f"Failed to process PDF {uploaded_file.filename}: {e}")
 
@@ -202,7 +218,7 @@ def upload_filled():
     except FileNotFoundError:
         return jsonify({"error": "Bounding boxes JSON file not found."}), 500
 
-    print("File Paths", new_files)  # Log bounding boxes
+    # print("File Paths", new_files)  # Log bounding boxes
     for file_path in new_files:
         try:
             # Extract data using bounding boxes
@@ -449,6 +465,7 @@ def extract_data_with_boxes(file_path, fields_with_boxes):
                 {
                     "image": {"content": content},
                     "features": [{"type": "TEXT_DETECTION"}],
+                    "imageContext": {"languageHints": ["en"]}
                 }
             ]
         }
