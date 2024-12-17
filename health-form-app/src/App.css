@@ -1,32 +1,35 @@
 /* App.css */
 @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Kode+Mono:wght@400..700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Protest+Revolution&display=swap");
-
-.container {
-  max-width: 800px; /* Limit the width of the content */
-  margin: 0 auto; /* Center the content horizontally */
-  padding: 20px; /* Add some padding for spacing */
-  background-color: white; /* White background for better contrast */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for modern look */
-  border-radius: 10px; /* Rounded corners */
-} 
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Dancing+Script:wght@400..700&family=Kode+Mono:wght@400..700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Protest+Revolution&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Kode+Mono:wght@400..700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Protest+Revolution&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 
 body {
   margin: 0;
   font-family: 'Arial', sans-serif;
-  background-color: #f4f8fb; /* Light blue background */
-  color: #2c3e50; /* Darker text for contrast */
+  background-color: #121212; /* Dark background */
+  color: #f5f5f5; /* Light text for contrast */
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #1e1e1e; /* Slightly lighter dark background */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+  border-radius: 10px;
+  color: #f5f5f5;
 }
 
 .App {
-  max-width: fit-content;
   text-align: center;
 }
 
 h1 {
-  color: #2c3e50;
+  color: #e91e63; /* Vibrant pink for headings */
   font-size: 2.5rem;
   margin: 20px 0;
-  text-shadow: 1px 1px 2px #dfe6e9;
+  text-shadow: 1px 1px 4px rgba(233, 30, 99, 0.5);
 }
 
 button {
@@ -34,94 +37,73 @@ button {
   padding: 12px 20px;
   font-size: 16px;
   font-weight: bold;
-  background-color: #3498db; /* Primary blue */
-  color: white; /* White text for contrast */
+  background-color: #6200ea; /* Deep purple */
+  color: #f5f5f5; /* Light text */
   border: none;
-  border-radius: 25px; /* Rounded corners for a modern look */
+  border-radius: 25px;
   cursor: pointer;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
 button:hover {
-  background-color: #2980b9; /* Slightly darker blue for hover effect */
-  transform: scale(1.05); /* Slight scaling for interaction */
+  background-color: #3700b3; /* Darker purple */
+  transform: scale(1.05);
 }
 
 button:active {
-  transform: scale(1); /* Reset scaling on click */
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(1);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+table {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: collapse;
+  background-color: #1e1e1e; /* Dark table background */
+  border-radius: 10px;
+  overflow: hidden;
+  color: #f5f5f5;
+}
+
+th, td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #333; /* Dark border for rows */
+}
+
+th {
+  background-color: #28a76e; /* Deep purple for header */
+  color: #f5f5f5;
+}
+
+tr:nth-child(even) {
+  background-color: #2c2c2c; /* Slightly lighter for alternating rows */
+}
+
+tr:hover {
+  background-color: #333333; /* Highlight row on hover */
 }
 
 p {
-  color: #34495e;
   font-size: 1.2rem;
-  margin: 15px 0;
+  color: #f5f5f5;
 }
 
 img {
   max-width: 90%;
   height: auto;
-  border: 2px solid #3498db; /* Blue border to match theme */
+  border: 2px solid #e91e63; /* Pink border */
   border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
 }
-
-div {
-  margin: 20px;
-  padding: 10px;
-}
-
-/* Responsive Styles */
-@media screen and (max-width: 768px) {
-  h1 {
-    font-size: 2rem;
-  }
-
-  button {
-    font-size: 14px;
-    padding: 10px 15px;
-  }
-}
-
-/* Table Styles */
-table {
-  width: 80%; /* Responsive width */
-  margin: 20px auto; /* Center align the table */
-  border-collapse: collapse; /* Remove extra spacing between cells */
-  background-color: white; /* White background for contrast */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for modern look */
-  border-radius: 10px; /* Rounded corners */
-  overflow: hidden; /* Apply rounding to table content */
-}
-
-th, td {
-  padding: 15px; /* Spacing inside cells */
-  text-align: left; /* Left-align text for readability */
-  border-bottom: 1px solid #ddd; /* Light border between rows */
-  font-size: 16px; /* Consistent font size */
-}
-
-th {
-  background-color: #3498db; /* Primary blue for header */
-  color: white; /* White text for contrast */
-  font-weight: bold;
-}
-
-tr:nth-child(even) {
-  background-color: #f9f9f9; /* Light gray for alternating rows */
-}
-
-tr:hover {
-  background-color: #f1f8ff; /* Light blue on hover */
-}
-
-td {
-  color: #34495e; /* Consistent text color */
+.custom-btn:hover {
+  background-color: #018786; /* Darker teal */
+  border-color: #018786;
 }
 
 strong {
-  color: #2c3e50; /* Slightly darker for keys */
+  color: #28a76e; /* Green for emphasis */
 }
 
 /* Responsive Adjustments */
@@ -160,4 +142,185 @@ strong {
 .custom-font-protest {
   font-family: "Protest Revolution", sans-serif;
   font-weight: 400;
+}
+
+.crimson-text-regular {
+  font-family: "Crimson Text", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.crimson-text-semibold {
+  font-family: "Crimson Text", serif;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.crimson-text-bold {
+  font-family: "Crimson Text", serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.crimson-text-regular-italic {
+  font-family: "Crimson Text", serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.crimson-text-semibold-italic {
+  font-family: "Crimson Text", serif;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.crimson-text-bold-italic {
+  font-family: "Crimson Text", serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.8); /* Black with opacity */
+}
+
+.modal-content {
+  background-color: #1e1e1e; /* Dark modal background */
+  margin: 10% auto; /* 10% from top and centered */
+  padding: 20px;
+  border: 1px solid #333; /* Subtle border */
+  width: 80%; /* Adjust modal width */
+  color: #f5f5f5; /* Light text */
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+  text-align: center;
+}
+
+.modal-header {
+  font-size: 1.5rem;
+  color: #e91e63; /* Vibrant pink for header */
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.modal-body {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  margin-top: 15px;
+}
+
+.close {
+  color: #f5f5f5;
+  float: right;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: #e91e63; /* Pink on hover/focus */
+  text-decoration: none;
+}
+
+button.modal-btn {
+  background-color: #6200ea; /* Deep purple */
+  color: #f5f5f5; /* Light text */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+button.modal-btn:hover {
+  background-color: #3700b3; /* Darker purple */
+  transform: scale(1.05);
+}
+
+/* Darker file input appearance */
+.custom-file {
+  margin: 10px 0;
+}
+
+.custom-file input[type="file"] {
+  cursor: pointer;
+  background-color: #212529; /* Dark gray background */
+  color: #f8f9fa; /* Light text */
+  border: 1px solid #6c757d; /* Subtle border */
+}
+
+.custom-file input[type="file"]::file-selector-button {
+  background-color: #343a40; /* Slightly lighter gray button */
+  color: #f8f9fa; /* Light button text */
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.custom-file input[type="file"]::file-selector-button:hover {
+  background-color: #495057; /* Highlight button on hover */
+}
+
+/* Stylish button */
+.btn-success {
+  background-color: #28a745; /* Green */
+  border: none;
+  font-weight: bold;
+}
+
+.btn-success:hover {
+  background-color: #218838; /* Darker green on hover */
+}
+
+/* Error text styling */
+.text-danger {
+  font-size: 0.9rem;
+}
+
+/* Style the unordered list */
+.field-list {
+  list-style-type: none; /* Remove bullet points */
+  padding: 2px 2;            /* Remove default padding */
+  margin: 0;             /* Remove default margin */
+  text-align: left;      /* Align items to the left */
+}
+
+/* Align checkbox and text */
+.field-item label {
+  display: flex;
+  align-items: center; /* Vertical alignment */
+  gap: 8px; /* Space between checkbox and text */
+}
+
+/* Style for the checkbox */
+.field-item input[type="checkbox"] {
+  margin-top: 0; /* Reset default margin */
+  vertical-align: middle; /* Ensure checkbox aligns vertically */
+}
+
+/* Wrap the text properly */
+.field-text {
+  white-space: pre-wrap; /* Ensures newlines render correctly */
+  word-break: break-word; /* Handles long words */
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #28a745; /* Custom green spinner color */
 }

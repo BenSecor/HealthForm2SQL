@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import "../App.css";
 
 const ResetDatabaseButton = () => {
   const handleReset = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/reset_database", {
+      const response = await fetch("http://127.0.0.1:5000/reset_database", { //try reseting the database
         method: "POST",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to reset the database.");
+        throw new Error("Failed to reset the database."); //if this doesn't work, throw an error message
       }
 
       const data = await response.json();

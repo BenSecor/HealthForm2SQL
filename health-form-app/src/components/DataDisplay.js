@@ -7,7 +7,8 @@ function DataDisplay({ data }) {
       <h2>Extracted Data</h2>
       {data && data.length > 0 ? (
         data.map((dataset, index) => (
-          <div key={index} className="dataset-container">
+          // this is what appears when you display the data obtained from the filled out forms
+          <div key={index} className="dataset-container"> 
             <h3>File {index + 1}</h3>
             <table>
               <thead>

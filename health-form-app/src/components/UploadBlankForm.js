@@ -7,12 +7,12 @@ function UploadBlankForm({ setFields }) {
 
   const handleBlankUpload = async (e) => {
     e.preventDefault();
-    if (!blankFile) {
+    if (!blankFile) { //makes sure you've attached a file before uploading
       setError("Please select a blank form to upload.");
       return;
     }
     const formData = new FormData();
-    formData.append("file", blankFile);
+    formData.append("file", blankFile); //add the blank file to formData
 
     try {
       const response = await fetch("http://127.0.0.1:5000/upload_blank", {
@@ -21,21 +21,26 @@ function UploadBlankForm({ setFields }) {
         credentials: "include",
       });
       const data = await response.json();
-      setFields(data.fields); // Pass fetched fields to parent
+      setFields(data.fields); // Store the fields in the database
     } catch (err) {
-      setError("Failed to upload blank form.");
+      setError("Failed to upload blank form."); //throw this error if you cant update the database
     }
   };
 
   return (
     <div className="container">
-      <form onSubmit={handleBlankUpload}>
-        <label>Upload Blank Form:</label>
-        <input
-          type="file"
-          className="file-input"
-          onChange={(e) => setBlankFile(e.target.files[0])}
-        />
+    <form onSubmit={handleBlankUpload} className="text-center">
+      {/* Custom styled file input */}
+      <div className="mb-3">
+        <div className="input-group">
+          <input
+            type="file"
+            className="form-control bg-dark text-light border-secondary"
+            id="fileInput"
+            onChange={(e) => setBlankFile(e.target.files[0])}
+          />
+        </div>
+      </div>
         <button type="submit" className="btn custom-btn">
           Upload Blank Form
         </button>
