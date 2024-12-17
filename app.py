@@ -7,7 +7,7 @@ import cv2
 from googleapiclient.discovery import build
 import base64
 import numpy as np
-from pdf2image import convert_from_path
+import fitz
 
 import csv
 from io import StringIO
@@ -142,7 +142,6 @@ def upload_blank():
 def submit_fields():
     data = request.get_json()
     selected_fields = data.get('fields', [])
-
     try:
         db.drop_all()
         global FormData
@@ -161,62 +160,77 @@ def upload_filled():
     if not uploaded_files:
         return jsonify({"error": "No selected files"}), 400
 
-    extracted_data_list = []
     new_files = []
 
-    #remove PDFS
+    print("Uploaded Files", uploaded_files)  # Log uploaded files
+    # Process PDFs and convert them into images
     for uploaded_file in uploaded_files:
         if uploaded_file.filename.endswith('.pdf'):
-            uploaded_files.remove(uploaded_file)
-            #parse PDF into multiple images 
-            pages = convert_from_path(uploaded_file, 500)
-            for i, page in enumerate(pages):
-                page.save(os.path.join(app.config['UPLOAD_FOLDER'], f'{uploaded_file}page_{i}.png'),'PNG')
-                new_files.append(f'{uploaded_file}page_{i}.png')
-        elif uploaded_file.filename.endswith('.png') or uploaded_file.filename.endswith('.jpg'):
-            new_files.append(uploaded_file)
-        else:
-            return jsonify({"error": "Invalid file format. Please upload a PDF, PNG, or JPG files."}), 400
+            try:
+                # Save the uploaded PDF to a temporary file
+                pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+                uploaded_file.save(pdf_path)
+                pdf_document = fitz.open(pdf_path)  # Open the PDF using PyMuPDF
 
-    # Process each file
-    for uploaded_file in uploaded_files:
-        if uploaded_file.filename == '':
-            continue
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
-        if uploaded_file.filename.endswith('.png') or uploaded_file.filename.endswith('.jpg'):
+                for page_number in range(len(pdf_document)):
+                    page = pdf_document[page_number]  # Get a page
+                    pix = page.get_pixmap(dpi=300)   # Convert page to an image with DPI=300
+                    page_filename = f"{os.path.splitext(uploaded_file.filename)[0]}_page_{page_number}.png"
+                    page_path = os.path.join(app.config['UPLOAD_FOLDER'], page_filename)
+                    pix.save(page_path)  # Save the image as PNG
+                    new_files.append(page_path)  # Append file path to list
+                
+                pdf_document.close()
+                print("PDF processed successfully.")  # Log success
+            except Exception as e:
+                raise RuntimeError(f"Failed to process PDF {uploaded_file.filename}: {e}")
+
+        elif uploaded_file.filename.endswith(('.png', '.jpg')):
+            # Save the image files directly
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
             uploaded_file.save(file_path)
+            new_files.append(file_path)
         else:
-            return jsonify({"error": "Invalid file format. Please upload a PDF, PNG, or JPG files."}), 400
-        
-        # Load bounding boxes
-        
+            return jsonify({"error": "Invalid file format. Please upload PDF, PNG, or JPG files only."}), 400
+
+    # Process each file for bounding box extraction and database saving
+    extracted_data_list = []
+    try:
         bounding_boxes_path = os.path.join(app.config['UPLOAD_FOLDER'], 'bounding_boxes.json')
         with open(bounding_boxes_path, 'r') as f:
             fields_with_boxes = json.load(f)
+    except FileNotFoundError:
+        return jsonify({"error": "Bounding boxes JSON file not found."}), 500
 
-        # Extract data using bounding boxes
-        extracted_data = extract_data_with_boxes(file_path, fields_with_boxes)
-
-        # Save data to the database
-        valid_columns = {column.name for column in FormData.__table__.columns}
-        filtered_data = {key: value for key, value in extracted_data.items() if key in valid_columns}
-
+    print("File Paths", new_files)  # Log bounding boxes
+    for file_path in new_files:
         try:
+            # Extract data using bounding boxes
+            extracted_data = extract_data_with_boxes(file_path, fields_with_boxes)
+
+            # Filter valid database columns
+            valid_columns = {column.name for column in FormData.__table__.columns}
+            filtered_data = {key: value for key, value in extracted_data.items() if key in valid_columns}
+
+            # Save the data to the database
             record = FormData(**filtered_data)
             db.session.add(record)
             db.session.commit()
             extracted_data_list.append(filtered_data)
         except Exception as e:
-            return jsonify({"error": f"Failed to save data to database: {e}"}), 500
-    
-     # Retrieve all data from the database
-    all_data = []
-    records = FormData.query.all()
-    for record in records:
-        row = {column.name: getattr(record, column.name) for column in FormData.__table__.columns}
-        all_data.append(row)
+            return jsonify({"error": f"Failed to process file {file_path}: {e}"}), 500
 
-    return jsonify({"message": "Filled forms processed and data saved.", "data": all_data,})
+    # Retrieve all data from the database
+    all_data = []
+    try:
+        records = FormData.query.all()
+        for record in records:
+            row = {column.name: getattr(record, column.name) for column in FormData.__table__.columns}
+            all_data.append(row)
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch data from database: {e}"}), 500
+
+    return jsonify({"message": "Filled forms processed and data saved.", "data": all_data})
 
 def extract_fields_with_boxes(file_path):
     # Load the image
