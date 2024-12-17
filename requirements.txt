@@ -1,0 +1,8 @@
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Cors==4.0.0
+pytesseract==0.3.10
+opencv-python-headless==4.9.0.80
+google-api-python-client==2.125.0
+numpy==1.26.4
+PyMuPDF==1.23.5
